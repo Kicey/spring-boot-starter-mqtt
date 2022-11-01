@@ -1,0 +1,17 @@
+{
+  "groups": [],
+  "properties": [
+    {
+      "name": "mqtt.uri",
+      "description": "The uri used to connect the mqtt broker, contains protocol, host, port."
+    },
+    {
+      "name": "mqtt.username",
+      "description": "The username used to connect the mqtt broker."
+    },
+    {
+      "name": "mqtt.password",
+      "description": "The password used to connect the mqtt broker."
+    }
+  ]
+}
