@@ -11,6 +11,4 @@ import site.kicey.springbootstartermqtt.MqttProperty;
 @EnableConfigurationProperties(MqttProperty.class)
 @ComponentScan(basePackages = "site.kicey.springbootstartermqtt.core")
 @Configuration
-public class MqttAutoConfigure {
-    
-}
+public class MqttAutoConfigure {}

@@ -30,93 +30,102 @@ import java.util.Map;
  */
 @Component
 public class MqttPublisherProcessor implements BeanFactoryPostProcessor, EnvironmentAware {
-    
-    private static final Log log = LogFactory.getLog(MqttSubscriberProcessor.class);
-    
-    private Environment env;
-    
-    @Override
-    public void setEnvironment(final Environment env) {
-        this.env = env;
+
+  private static final Log log = LogFactory.getLog(MqttSubscriberProcessor.class);
+
+  private Environment env;
+
+  @Override
+  public void setEnvironment(final Environment env) {
+    this.env = env;
+  }
+
+  /**
+   * @param beanFactory the bean factory used by the application context
+   * @throws BeansException in case of errors
+   */
+  @Override
+  public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory)
+      throws BeansException {
+    log.debug("Start to process MqttPublisher");
+    String[] names = beanFactory.getBeanNamesForAnnotation(MqttPublisher.class);
+    if (names.length == 0) {
+      log.debug("No MqttPublisher found.");
+      return;
     }
-    
-    /**
-     * @param beanFactory the bean factory used by the application context
-     * @throws BeansException in case of errors
-     */
-    @Override
-    public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
-        log.debug("Start to process MqttPublisher");
-        String[] names = beanFactory.getBeanNamesForAnnotation(MqttPublisher.class);
-        if (names.length == 0) {
-            log.debug("No MqttPublisher found.");
-            return;
+    MqttPahoClientFactory mqttPahoClientFactory;
+    try {
+      mqttPahoClientFactory = beanFactory.getBean(MqttPahoClientFactory.class);
+    } catch (BeansException e) {
+      log.debug(
+          "Can't find bean MqttPahoClientFactory, try to use site.kicey.springbootstartermqtt.core.IMqttPahoClientFactory");
+      mqttPahoClientFactory =
+          IMqttPahoClientFactory.from(
+              env.getProperty("mqtt.uri"),
+              env.getProperty("mqtt.username"),
+              env.getProperty("mqtt.password"));
+      beanFactory.registerSingleton(MqttProperty.MqttClientFactoryName, mqttPahoClientFactory);
+    }
+
+    for (String name : names) {
+      MqttPublisher mqttPublisher = beanFactory.findAnnotationOnBean(name, MqttPublisher.class);
+      assert mqttPublisher != null;
+      if (mqttPublisher.clientId() == null || mqttPublisher.clientId().equals("")) {
+        throw new RuntimeException("@MqttPublisher's clientId can't be null or empty.");
+      }
+
+      final String channelName = mqttPublisher.clientId() + ".output.channel";
+      DirectChannel mqttOutputChannel = new DirectChannel();
+
+      beanFactory.registerSingleton(channelName, mqttOutputChannel);
+
+      final String handlerName = mqttPublisher.clientId() + ".output.handler";
+      MqttPahoMessageHandler messageSender =
+          new MqttPahoMessageHandler(mqttPublisher.clientId(), mqttPahoClientFactory);
+      messageSender.setAsync(true);
+      messageSender.setDefaultQos(1);
+      messageSender.setConverter(new DefaultPahoMessageConverter());
+
+      beanFactory.registerSingleton(handlerName, messageSender);
+
+      mqttOutputChannel.subscribe(messageSender);
+
+      Class<?> clz;
+      try {
+        clz = beanFactory.getType(name);
+      } catch (NoSuchBeanDefinitionException e) {
+        throw new RuntimeException("can't find class for bean " + name);
+      }
+      assert clz != null;
+      Method[] mqttTopicMethods = AnnotationParser.getMqttTopicMethods(clz);
+      for (Method method : mqttTopicMethods) {
+        MqttTopic mqttTopic = method.getAnnotation(MqttTopic.class);
+        if (mqttTopic.topics() == null || mqttTopic.topics().length != 1) {
+          throw new RuntimeException(
+              "@MqttTopic's topics must equal to 1 when used with @MqttPublisher");
         }
-        MqttPahoClientFactory mqttPahoClientFactory;
-        try {
-            mqttPahoClientFactory = beanFactory.getBean(MqttPahoClientFactory.class);
-        } catch (BeansException e) {
-            log.debug(
-                    "Can't find bean MqttPahoClientFactory, try to use site.kicey.springbootstartermqtt.core.IMqttPahoClientFactory");
-            mqttPahoClientFactory = IMqttPahoClientFactory.from(env.getProperty("mqtt.uri"),
-                    env.getProperty("mqtt.username"), env.getProperty("mqtt.password"));
-            beanFactory.registerSingleton(MqttProperty.MqttClientFactoryName, mqttPahoClientFactory);
-        }
-        
-        for (String name : names) {
-            MqttPublisher mqttPublisher = beanFactory.findAnnotationOnBean(name, MqttPublisher.class);
-            assert mqttPublisher != null;
-            if (mqttPublisher.clientId() == null || mqttPublisher.clientId().equals("")) {
-                throw new RuntimeException("@MqttPublisher's clientId can't be null or empty.");
-            }
-            
-            final String channelName = mqttPublisher.clientId() + ".output.channel";
-            DirectChannel mqttOutputChannel = new DirectChannel();
-            
-            beanFactory.registerSingleton(channelName, mqttOutputChannel);
-            
-            final String handlerName = mqttPublisher.clientId() + ".output.handler";
-            MqttPahoMessageHandler messageSender = new MqttPahoMessageHandler(mqttPublisher.clientId(),
-                    mqttPahoClientFactory);
-            messageSender.setAsync(true);
-            messageSender.setDefaultQos(1);
-            messageSender.setConverter(new DefaultPahoMessageConverter());
-            
-            beanFactory.registerSingleton(handlerName, messageSender);
-            
-            mqttOutputChannel.subscribe(messageSender);
-            
-            Class<?> clz;
-            try {
-                clz = beanFactory.getType(name);
-            } catch (NoSuchBeanDefinitionException e) {
-                throw new RuntimeException("can't find class for bean " + name);
-            }
-            assert clz != null;
-            Method[] mqttTopicMethods = AnnotationParser.getMqttTopicMethods(clz);
-            for (Method method : mqttTopicMethods) {
-                MqttTopic mqttTopic = method.getAnnotation(MqttTopic.class);
-                if (mqttTopic.topics() == null || mqttTopic.topics().length != 1) {
-                    throw new RuntimeException("@MqttTopic's topics must equal to 1 when used with @MqttPublisher");
-                }
-                final String methodDirectChannelName = mqttTopic.requestChannel();
-                DirectChannel methodDirectChannel = new DirectChannel();
-                beanFactory.registerSingleton(methodDirectChannelName, methodDirectChannel);
-                
-                final String headerEnricherName =
-                        mqttPublisher.clientId() + "." + method.getName() + ".header.enricher";
-                MessageTransformingHandler headerEnricher = new MessageTransformingHandler(message -> {
-                    Map<String, Object> headersMap = new HashMap<>(message.getHeaders());
-                    headersMap.put(MqttHeaders.TOPIC, mqttTopic.topics()[0]);
-                    GenericMessage<?> messageWithHeader = new GenericMessage<>(message.getPayload(), headersMap);
-                    log.debug("HeaderEnricher for " + mqttTopic.requestChannel() + " receive message.");
-                    log.debug(messageWithHeader.getPayload().toString());
-                    return messageWithHeader;
+        final String methodDirectChannelName = mqttTopic.requestChannel();
+        DirectChannel methodDirectChannel = new DirectChannel();
+        beanFactory.registerSingleton(methodDirectChannelName, methodDirectChannel);
+
+        final String headerEnricherName =
+            mqttPublisher.clientId() + "." + method.getName() + ".header.enricher";
+        MessageTransformingHandler headerEnricher =
+            new MessageTransformingHandler(
+                message -> {
+                  Map<String, Object> headersMap = new HashMap<>(message.getHeaders());
+                  headersMap.put(MqttHeaders.TOPIC, mqttTopic.topics()[0]);
+                  GenericMessage<?> messageWithHeader =
+                      new GenericMessage<>(message.getPayload(), headersMap);
+                  log.debug(
+                      "HeaderEnricher for " + mqttTopic.requestChannel() + " receive message.");
+                  log.debug(messageWithHeader.getPayload().toString());
+                  return messageWithHeader;
                 });
-                methodDirectChannel.subscribe(headerEnricher);
-                headerEnricher.setOutputChannel(mqttOutputChannel);
-                beanFactory.registerSingleton(headerEnricherName, headerEnricher);
-            }
-        }
+        methodDirectChannel.subscribe(headerEnricher);
+        headerEnricher.setOutputChannel(mqttOutputChannel);
+        beanFactory.registerSingleton(headerEnricherName, headerEnricher);
+      }
     }
+  }
 }

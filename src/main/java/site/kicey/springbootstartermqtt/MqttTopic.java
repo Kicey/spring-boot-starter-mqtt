@@ -18,15 +18,15 @@ import java.lang.annotation.Target;
 @Gateway
 public @interface MqttTopic {
 
-    @AliasFor("value")
-    String[] topics() default {};
-    
-    @AliasFor("topics")
-    String[] value() default {};
+  @AliasFor("value")
+  String[] topics() default {};
 
-    @AliasFor(annotation = ServiceActivator.class, attribute = "inputChannel")
-    String inputChannel() default "nullChannel";
+  @AliasFor("topics")
+  String[] value() default {};
 
-    @AliasFor(annotation = Gateway.class, attribute = "requestChannel")
-    String requestChannel() default "";
+  @AliasFor(annotation = ServiceActivator.class, attribute = "inputChannel")
+  String inputChannel() default "nullChannel";
+
+  @AliasFor(annotation = Gateway.class, attribute = "requestChannel")
+  String requestChannel() default "";
 }
