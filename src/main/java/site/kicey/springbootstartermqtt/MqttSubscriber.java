@@ -20,6 +20,5 @@ public @interface MqttSubscriber {
   @AliasFor(annotation = Component.class, attribute = "value")
   String value() default "";
 
-  @AliasFor("")
   String clientId();
 }
