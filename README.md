@@ -13,3 +13,4 @@ Features to be supported:
 - [ ] implicit client id, channel name
 - [ ] combine two client that used by publisher and subscriber
 - [ ] message payload convert
+- [ ] qos support
