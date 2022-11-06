@@ -16,5 +16,5 @@ import java.lang.annotation.Target;
 @MessagingGateway(proxyDefaultMethods = false)
 public @interface MqttPublisher {
 
-  String clientId();
+  String clientId() default "";
 }

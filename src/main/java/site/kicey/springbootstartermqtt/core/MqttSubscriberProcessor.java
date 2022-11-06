@@ -17,6 +17,7 @@ import org.springframework.integration.mqtt.support.MqttHeaders;
 import org.springframework.integration.router.HeaderValueRouter;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import site.kicey.springbootstartermqtt.MqttProperty;
 import site.kicey.springbootstartermqtt.MqttSubscriber;
 import site.kicey.springbootstartermqtt.MqttTopic;
@@ -85,23 +86,26 @@ public class MqttSubscriberProcessor implements BeanFactoryPostProcessor, Enviro
             "can't get Class: " + className + "annotated by @MqttSubscriber");
       }
       MqttSubscriber mqttSubscriber = clz.getAnnotation(MqttSubscriber.class);
-
-      if (mqttSubscriber.clientId() == null || mqttSubscriber.clientId().equals("")) {
-        throw new RuntimeException("@MqttSubscriber's clientId can't be null or empty");
+      assert mqttSubscriber != null;
+      final String clientId;
+      if(mqttSubscriber.clientId() == null || mqttSubscriber.clientId().equals("")){
+        clientId = StringUtils.uncapitalize(clz.getSimpleName());
+      } else {
+        clientId = mqttSubscriber.clientId();
       }
 
       // create an adapter for every MqttSubscriber
       PublishSubscribeChannel mqttToMessageChannel = new PublishSubscribeChannel();
 
       // name of the raw mqtt message input channel
-      final String clientInputChannelName = mqttSubscriber.clientId() + ".inputChannel";
+      final String clientInputChannelName = clientId + ".inputChannel";
       beanFactory.registerSingleton(clientInputChannelName, mqttToMessageChannel);
 
       // get all topics related to the client to create an adapter
       String[] clientTopics = AnnotationParser.getTopics(clz);
       MqttPahoMessageDrivenChannelAdapter adapter =
           new MqttPahoMessageDrivenChannelAdapter(
-              mqttSubscriber.clientId(), mqttPahoClientFactory, clientTopics);
+              clientId, mqttPahoClientFactory, clientTopics);
 
       adapter.setBeanFactory(beanFactory);
       adapter.setCompletionTimeout(5000);
@@ -112,7 +116,7 @@ public class MqttSubscriberProcessor implements BeanFactoryPostProcessor, Enviro
       if (log.isDebugEnabled()) {
         adapter.setShouldTrack(true);
       }
-      beanFactory.registerSingleton(mqttSubscriber.clientId() + ".inputAdapter", adapter);
+      beanFactory.registerSingleton(clientId + ".inputAdapter", adapter);
 
       // create a router for every method annotated by MqttTopic
       Method[] mqttTopicMethods = AnnotationParser.getMqttTopicMethods(clz);
@@ -121,7 +125,7 @@ public class MqttSubscriberProcessor implements BeanFactoryPostProcessor, Enviro
         router = new HeaderValueRouter(MqttHeaders.RECEIVED_TOPIC);
         router.setBeanFactory(beanFactory);
         mqttToMessageChannel.subscribe(router);
-        String routerBeanName = mqttSubscriber.clientId() + ".router";
+        String routerBeanName = clientId + ".router";
         beanFactory.registerSingleton(routerBeanName, router);
       }
       for (Method method : mqttTopicMethods) {
