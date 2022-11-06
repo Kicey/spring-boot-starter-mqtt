@@ -25,7 +25,7 @@ public @interface MqttTopic {
   String[] value() default {};
 
   @AliasFor(annotation = ServiceActivator.class, attribute = "inputChannel")
-  String inputChannel() default "nullChannel";
+  String inputChannel() default "";
 
   @AliasFor(annotation = Gateway.class, attribute = "requestChannel")
   String requestChannel() default "";
