@@ -10,7 +10,7 @@ There is a sample about how to use the starter: [starter-mqtt-sample](https://gi
 
 Features to be supported:
 
-- [ ] implicit client id, channel name
+- [ ] implicit channel name
 - [ ] combine two client that used by publisher and subscriber
 - [ ] message payload convert
 - [ ] qos support
