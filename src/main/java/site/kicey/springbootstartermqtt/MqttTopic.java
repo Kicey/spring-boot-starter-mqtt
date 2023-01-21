@@ -3,7 +3,6 @@ package site.kicey.springbootstartermqtt;
 import org.springframework.core.annotation.AliasFor;
 import org.springframework.integration.annotation.Gateway;
 import org.springframework.integration.annotation.ServiceActivator;
-
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;

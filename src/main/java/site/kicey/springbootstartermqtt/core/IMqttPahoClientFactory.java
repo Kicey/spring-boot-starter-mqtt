@@ -1,5 +1,8 @@
 package site.kicey.springbootstartermqtt.core;
 
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 import org.eclipse.paho.client.mqttv3.IMqttAsyncClient;
 import org.eclipse.paho.client.mqttv3.IMqttClient;
 import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
@@ -10,10 +13,6 @@ import org.eclipse.paho.client.mqttv3.MqttException;
 import org.springframework.integration.mqtt.core.ConsumerStopAction;
 import org.springframework.integration.mqtt.core.MqttPahoClientFactory;
 import org.springframework.util.Assert;
-
-import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Kicey
@@ -30,7 +29,7 @@ public class IMqttPahoClientFactory implements MqttPahoClientFactory {
     IMqttPahoClientFactory clientFactory = new IMqttPahoClientFactory();
 
     MqttConnectOptions connectOptions = new MqttConnectOptions();
-    connectOptions.setServerURIs(new String[] {uri});
+    connectOptions.setServerURIs(new String[]{uri});
     connectOptions.setUserName(username);
     connectOptions.setPassword(Objects.requireNonNull(password).toCharArray());
 
@@ -41,7 +40,7 @@ public class IMqttPahoClientFactory implements MqttPahoClientFactory {
   /**
    * Retrieve a client instance.
    *
-   * @param url The URL.
+   * @param url      The URL.
    * @param clientId The client id.
    * @return The client instance.
    * @throws MqttException Any.
@@ -68,7 +67,7 @@ public class IMqttPahoClientFactory implements MqttPahoClientFactory {
   /**
    * Retrieve an async client instance.
    *
-   * @param url The URL.
+   * @param url      The URL.
    * @param clientId The client id.
    * @return The client instance.
    * @throws MqttException Any.

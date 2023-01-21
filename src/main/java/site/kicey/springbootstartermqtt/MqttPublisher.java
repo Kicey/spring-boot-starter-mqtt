@@ -9,7 +9,7 @@ import java.lang.annotation.Target;
 
 /**
  * @author Kicey
- *     <p>This annotation will be processed and create according MqttPahoMessageHandler and channel.
+ * <p>This annotation will be processed and create according MqttPahoMessageHandler and channel.
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)

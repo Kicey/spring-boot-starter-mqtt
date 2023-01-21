@@ -1,16 +1,26 @@
 package site.kicey.springbootstartermqtt.util;
 
+import java.lang.reflect.Method;
+import java.util.Arrays;
 import site.kicey.springbootstartermqtt.MqttPublisher;
 import site.kicey.springbootstartermqtt.MqttSubscriber;
 import site.kicey.springbootstartermqtt.MqttTopic;
 
-import java.lang.reflect.Method;
-import java.util.Arrays;
-
 /**
+ * Util which get methods and corresponding topic annotated with {@link MqttTopic} from class
+ * annotated with {@link MqttTopic} or {@link MqttPublisher}.
+ *
  * @author Kicey
  */
 public class AnnotationParser {
+
+  /**
+   * Get methods annotated with {@link MqttTopic} from class annotated with {@link MqttTopic} or
+   * {@link MqttPublisher}.
+   *
+   * @param clazz Class to be parsed
+   * @return Corresponding methods
+   */
   public static Method[] getMqttTopicMethods(Class<?> clazz) {
     if (!clazz.isAnnotationPresent(MqttSubscriber.class)
         && !clazz.isAnnotationPresent(MqttPublisher.class)) {
@@ -21,6 +31,12 @@ public class AnnotationParser {
         .toArray(Method[]::new);
   }
 
+  /**
+   * Get topic from method annotated with {@link MqttTopic}.
+   *
+   * @param clazz Class to be parsed
+   * @return Corresponding topic
+   */
   public static String[] getTopics(Class<?> clazz) {
     Method[] methods = getMqttTopicMethods(clazz);
     String[] topics =

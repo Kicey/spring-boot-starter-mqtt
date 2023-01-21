@@ -10,13 +10,14 @@ import java.lang.annotation.Target;
 
 /**
  * @author Kicey
- *     <p>This annotation is used for class. After processed, according
- *     MqttPahoMessageDrivenChannelAdapter and channel will be created to subscribe the mqtt topic.
+ * <p>This annotation is used for class. After processed, according
+ * MqttPahoMessageDrivenChannelAdapter and channel will be created to subscribe the mqtt topic.
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @Component
 public @interface MqttSubscriber {
+
   @AliasFor(annotation = Component.class, attribute = "value")
   String value() default "";
 

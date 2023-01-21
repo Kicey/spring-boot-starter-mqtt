@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "mqtt")
 @Component
 public class MqttProperty {
+
   public static final String MqttClientFactoryName = "mqttPahoClientFactory";
   public String uri;
   public String username;

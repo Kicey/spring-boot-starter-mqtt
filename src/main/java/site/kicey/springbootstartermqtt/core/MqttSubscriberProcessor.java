@@ -88,7 +88,7 @@ public class MqttSubscriberProcessor implements BeanFactoryPostProcessor, Enviro
       MqttSubscriber mqttSubscriber = clz.getAnnotation(MqttSubscriber.class);
       assert mqttSubscriber != null;
       final String clientId;
-      if(mqttSubscriber.clientId() == null || mqttSubscriber.clientId().equals("")){
+      if (mqttSubscriber.clientId() == null || mqttSubscriber.clientId().equals("")) {
         clientId = StringUtils.uncapitalize(clz.getSimpleName());
       } else {
         clientId = mqttSubscriber.clientId();
